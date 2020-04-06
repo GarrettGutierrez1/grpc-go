@@ -19,11 +19,85 @@
 // Package grpclog (internal) defines depth logging for grpc.
 package grpclog
 
+import (
+	"os"
+	"strconv"
+)
+
+// Component is an alias for string, used to identify a component.
+type Component string
+
 // Logger is the logger used for the non-depth log functions.
 var Logger LoggerV2
 
 // DepthLogger is the logger used for the depth log functions.
 var DepthLogger DepthLoggerV2
+
+// Component identifiers.
+const (
+	Channelz Component = "GRPC_COMPONENT_CHANNELZ"
+	Other    Component = "GRPC_COMPONENT_OTHER"
+)
+
+// defaultVerbosity specifies the defaul verbosity for any component that uses
+// this as the verbosity in its componentData definition.
+const defaultVerbosity = 0
+
+// componentData specifies the data for a component relevant to logging.
+type componentData struct {
+	tag       string
+	verbosity int
+}
+
+// components maps component IDs to component logging data.
+var components = map[Component]componentData{
+	Channelz: componentData{"[channelz]", defaultVerbosity},
+	Other:    componentData{"[other]", defaultVerbosity},
+}
+
+// init uses environment variables to set the verbosity of each component.
+func init() {
+	for c, cData := range components {
+		if varString, ok := os.LookupEnv(string(c)); ok {
+			if v, err := strconv.Atoi(varString); err == nil {
+				cData.verbosity = v
+			}
+		}
+	}
+}
+
+// CInfo info logs for a specified component.
+// Log will only occur is v is <= the component's verbosity.
+func CInfo(c Component, v int, d int, args ...interface{}) {
+	if cData, ok := components[c]; ok {
+		args = append([]interface{}{cData.tag}, args...)
+		if v <= cData.verbosity {
+			InfoDepth(d, args)
+		}
+	} else {
+		Logger.Error("component", c, "not identified")
+	}
+}
+
+// CWarning warning logs for a specified component.
+func CWarning(c Component, d int, args ...interface{}) {
+	if cData, ok := components[c]; ok {
+		args = append([]interface{}{cData.tag}, args...)
+		WarningDepth(d, args)
+	} else {
+		Logger.Error("component", c, "not identified")
+	}
+}
+
+// CError error logs for a specified component.
+func CError(c Component, d int, args ...interface{}) {
+	if cData, ok := components[c]; ok {
+		args = append([]interface{}{cData.tag}, args...)
+		ErrorDepth(d, args)
+	} else {
+		Logger.Error("component", c, "not identified")
+	}
+}
 
 // InfoDepth logs to the INFO log at the specified depth.
 func InfoDepth(depth int, args ...interface{}) {
