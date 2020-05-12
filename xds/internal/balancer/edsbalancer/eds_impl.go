@@ -31,6 +31,7 @@ import (
 	"google.golang.org/grpc/resolver"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/xds/internal"
+	"google.golang.org/grpc/xds/internal/balancer/balancergroup"
 	"google.golang.org/grpc/xds/internal/balancer/lrs"
 	xdsclient "google.golang.org/grpc/xds/internal/client"
 )
@@ -46,8 +47,8 @@ type localityConfig struct {
 // balancerGroupWithConfig contains the localities with the same priority. It
 // manages all localities using a balancerGroup.
 type balancerGroupWithConfig struct {
-	bg      *balancerGroup
-	configs map[internal.Locality]*localityConfig
+	bg      *balancergroup.BalancerGroup
+	configs map[internal.LocalityID]*localityConfig
 }
 
 // edsBalancerImpl does load balancing based on the EDS responses. Note that it
@@ -113,12 +114,12 @@ func newEDSBalancerImpl(cc balancer.ClientConn, enqueueState func(priorityType, 
 	return edsImpl
 }
 
-// HandleChildPolicy updates the child balancers handling endpoints. Child
+// handleChildPolicy updates the child balancers handling endpoints. Child
 // policy is roundrobin by default. If the specified balancer is not installed,
 // the old child balancer will be used.
 //
 // HandleChildPolicy and HandleEDSResponse must be called by the same goroutine.
-func (edsImpl *edsBalancerImpl) HandleChildPolicy(name string, config json.RawMessage) {
+func (edsImpl *edsBalancerImpl) handleChildPolicy(name string, config json.RawMessage) {
 	if edsImpl.subBalancerBuilder.Name() == name {
 		return
 	}
@@ -136,9 +137,11 @@ func (edsImpl *edsBalancerImpl) HandleChildPolicy(name string, config json.RawMe
 			// TODO: (eds) add support to balancer group to support smoothly
 			//  switching sub-balancers (keep old balancer around until new
 			//  balancer becomes ready).
-			bgwc.bg.remove(id)
-			bgwc.bg.add(id, config.weight, edsImpl.subBalancerBuilder)
-			bgwc.bg.handleResolvedAddrs(id, config.addrs)
+			bgwc.bg.Remove(id)
+			bgwc.bg.Add(id, config.weight, edsImpl.subBalancerBuilder)
+			bgwc.bg.UpdateClientConnState(id, balancer.ClientConnState{
+				ResolverState: resolver.State{Addresses: config.addrs},
+			})
 		}
 	}
 }
@@ -166,11 +169,11 @@ func (edsImpl *edsBalancerImpl) updateDrops(dropConfig []xdsclient.OverloadDropC
 	edsImpl.pickerMu.Unlock()
 }
 
-// HandleEDSResponse handles the EDS response and creates/deletes localities and
+// handleEDSResponse handles the EDS response and creates/deletes localities and
 // SubConns. It also handles drops.
 //
 // HandleChildPolicy and HandleEDSResponse must be called by the same goroutine.
-func (edsImpl *edsBalancerImpl) HandleEDSResponse(edsResp *xdsclient.EDSUpdate) {
+func (edsImpl *edsBalancerImpl) handleEDSResponse(edsResp xdsclient.EndpointsUpdate) {
 	// TODO: Unhandled fields from EDS response:
 	//  - edsResp.GetPolicy().GetOverprovisioningFactor()
 	//  - locality.GetPriority()
@@ -217,8 +220,8 @@ func (edsImpl *edsBalancerImpl) HandleEDSResponse(edsResp *xdsclient.EDSUpdate) 
 			// be started when necessary (e.g. when higher is down, or if it's a
 			// new lowest priority).
 			bgwc = &balancerGroupWithConfig{
-				bg:      newBalancerGroup(edsImpl.ccWrapperWithPriority(priority), edsImpl.loadStore, edsImpl.logger),
-				configs: make(map[internal.Locality]*localityConfig),
+				bg:      balancergroup.New(edsImpl.ccWrapperWithPriority(priority), edsImpl.loadStore, edsImpl.logger),
+				configs: make(map[internal.LocalityID]*localityConfig),
 			}
 			edsImpl.priorityToLocalities[priority] = bgwc
 			priorityChanged = true
@@ -233,7 +236,7 @@ func (edsImpl *edsBalancerImpl) HandleEDSResponse(edsResp *xdsclient.EDSUpdate) 
 	for p, bgwc := range edsImpl.priorityToLocalities {
 		if _, ok := newLocalitiesWithPriority[p]; !ok {
 			delete(edsImpl.priorityToLocalities, p)
-			bgwc.bg.close()
+			bgwc.bg.Close()
 			delete(edsImpl.priorityToState, p)
 			priorityChanged = true
 			edsImpl.logger.Infof("Priority %v deleted", p)
@@ -252,7 +255,7 @@ func (edsImpl *edsBalancerImpl) handleEDSResponsePerPriority(bgwc *balancerGroup
 	// newLocalitiesSet contains all names of localities in the new EDS response
 	// for the same priority. It's used to delete localities that are removed in
 	// the new EDS response.
-	newLocalitiesSet := make(map[internal.Locality]struct{})
+	newLocalitiesSet := make(map[internal.LocalityID]struct{})
 	for _, locality := range newLocalities {
 		// One balancer for each locality.
 
@@ -274,9 +277,16 @@ func (edsImpl *edsBalancerImpl) handleEDSResponsePerPriority(bgwc *balancerGroup
 				Addr: lbEndpoint.Address,
 			}
 			if edsImpl.subBalancerBuilder.Name() == weightedroundrobin.Name && lbEndpoint.Weight != 0 {
-				address.Metadata = &weightedroundrobin.AddrInfo{
-					Weight: lbEndpoint.Weight,
-				}
+				ai := weightedroundrobin.AddrInfo{Weight: lbEndpoint.Weight}
+				address = weightedroundrobin.SetAddrInfo(address, ai)
+				// Metadata field in resolver.Address is deprecated. The
+				// attributes field should be used to specify arbitrary
+				// attributes about the address. We still need to populate the
+				// Metadata field here to allow users of this field to migrate
+				// to the new one.
+				// TODO(easwars): Remove this once all users have migrated.
+				// See https://github.com/grpc/grpc-go/issues/3563.
+				address.Metadata = &ai
 			}
 			newAddrs = append(newAddrs, address)
 		}
@@ -284,7 +294,7 @@ func (edsImpl *edsBalancerImpl) handleEDSResponsePerPriority(bgwc *balancerGroup
 		config, ok := bgwc.configs[lid]
 		if !ok {
 			// A new balancer, add it to balancer group and balancer map.
-			bgwc.bg.add(lid, newWeight, edsImpl.subBalancerBuilder)
+			bgwc.bg.Add(lid, newWeight, edsImpl.subBalancerBuilder)
 			config = &localityConfig{
 				weight: newWeight,
 			}
@@ -307,27 +317,29 @@ func (edsImpl *edsBalancerImpl) handleEDSResponsePerPriority(bgwc *balancerGroup
 
 		if weightChanged {
 			config.weight = newWeight
-			bgwc.bg.changeWeight(lid, newWeight)
+			bgwc.bg.ChangeWeight(lid, newWeight)
 		}
 
 		if addrsChanged {
 			config.addrs = newAddrs
-			bgwc.bg.handleResolvedAddrs(lid, newAddrs)
+			bgwc.bg.UpdateClientConnState(lid, balancer.ClientConnState{
+				ResolverState: resolver.State{Addresses: newAddrs},
+			})
 		}
 	}
 
 	// Delete localities that are removed in the latest response.
 	for lid := range bgwc.configs {
 		if _, ok := newLocalitiesSet[lid]; !ok {
-			bgwc.bg.remove(lid)
+			bgwc.bg.Remove(lid)
 			delete(bgwc.configs, lid)
 			edsImpl.logger.Infof("Locality %v deleted", lid)
 		}
 	}
 }
 
-// HandleSubConnStateChange handles the state change and update pickers accordingly.
-func (edsImpl *edsBalancerImpl) HandleSubConnStateChange(sc balancer.SubConn, s connectivity.State) {
+// handleSubConnStateChange handles the state change and update pickers accordingly.
+func (edsImpl *edsBalancerImpl) handleSubConnStateChange(sc balancer.SubConn, s connectivity.State) {
 	edsImpl.subConnMu.Lock()
 	var bgwc *balancerGroupWithConfig
 	if p, ok := edsImpl.subConnToPriority[sc]; ok {
@@ -343,7 +355,7 @@ func (edsImpl *edsBalancerImpl) HandleSubConnStateChange(sc balancer.SubConn, s 
 		return
 	}
 	if bg := bgwc.bg; bg != nil {
-		bg.handleSubConnStateChange(sc, s)
+		bg.UpdateSubConnState(sc, balancer.SubConnState{ConnectivityState: s})
 	}
 }
 
@@ -384,10 +396,6 @@ type edsBalancerWrapperCC struct {
 func (ebwcc *edsBalancerWrapperCC) NewSubConn(addrs []resolver.Address, opts balancer.NewSubConnOptions) (balancer.SubConn, error) {
 	return ebwcc.parent.newSubConn(ebwcc.priority, addrs, opts)
 }
-
-func (ebwcc *edsBalancerWrapperCC) UpdateBalancerState(state connectivity.State, picker balancer.Picker) {
-}
-
 func (ebwcc *edsBalancerWrapperCC) UpdateState(state balancer.State) {
 	ebwcc.parent.enqueueChildBalancerStateUpdate(ebwcc.priority, state)
 }
@@ -403,22 +411,22 @@ func (edsImpl *edsBalancerImpl) newSubConn(priority priorityType, addrs []resolv
 	return sc, nil
 }
 
-// Close closes the balancer.
-func (edsImpl *edsBalancerImpl) Close() {
+// close closes the balancer.
+func (edsImpl *edsBalancerImpl) close() {
 	for _, bgwc := range edsImpl.priorityToLocalities {
 		if bg := bgwc.bg; bg != nil {
-			bg.close()
+			bg.Close()
 		}
 	}
 }
 
 type dropPicker struct {
 	drops     []*dropper
-	p         balancer.V2Picker
+	p         balancer.Picker
 	loadStore lrs.Store
 }
 
-func newDropPicker(p balancer.V2Picker, drops []*dropper, loadStore lrs.Store) *dropPicker {
+func newDropPicker(p balancer.Picker, drops []*dropper, loadStore lrs.Store) *dropPicker {
 	return &dropPicker{
 		drops:     drops,
 		p:         p,

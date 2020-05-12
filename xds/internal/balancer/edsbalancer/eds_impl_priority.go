@@ -46,7 +46,7 @@ func (edsImpl *edsBalancerImpl) handlePriorityChange() {
 	// Everything was removed by EDS.
 	if !edsImpl.priorityLowest.isSet() {
 		edsImpl.priorityInUse = newPriorityTypeUnset()
-		edsImpl.cc.UpdateState(balancer.State{ConnectivityState: connectivity.TransientFailure, Picker: base.NewErrPickerV2(balancer.ErrTransientFailure)})
+		edsImpl.cc.UpdateState(balancer.State{ConnectivityState: connectivity.TransientFailure, Picker: base.NewErrPicker(balancer.ErrTransientFailure)})
 		return
 	}
 
@@ -73,7 +73,7 @@ func (edsImpl *edsBalancerImpl) handlePriorityChange() {
 			// We don't have an old state to send to parent, but we also don't
 			// want parent to keep using picker from old_priorityInUse. Send an
 			// update to trigger block picks until a new picker is ready.
-			edsImpl.cc.UpdateState(balancer.State{ConnectivityState: connectivity.Connecting, Picker: base.NewErrPickerV2(balancer.ErrNoSubConnAvailable)})
+			edsImpl.cc.UpdateState(balancer.State{ConnectivityState: connectivity.Connecting, Picker: base.NewErrPicker(balancer.ErrNoSubConnAvailable)})
 		}
 		return
 	}
@@ -102,7 +102,7 @@ func (edsImpl *edsBalancerImpl) startPriority(priority priorityType) {
 	// currently avoided by handling balancer update in a goroutine (the run
 	// goroutine in the parent eds balancer). When priority balancer is split
 	// into its own, this asynchronous state handling needs to be copied.
-	p.bg.start()
+	p.bg.Start()
 	// startPriority can be called when
 	// 1. first EDS resp, start p0
 	// 2. a high priority goes Failure, start next
@@ -189,7 +189,7 @@ func (edsImpl *edsBalancerImpl) handlePriorityWithNewStateReady(priority priorit
 		edsImpl.logger.Infof("Switching priority from %v to %v, because latter became Ready", edsImpl.priorityInUse, priority)
 		edsImpl.priorityInUse = priority
 		for i := priority.nextLower(); !i.lowerThan(edsImpl.priorityLowest); i = i.nextLower() {
-			edsImpl.priorityToLocalities[i].bg.close()
+			edsImpl.priorityToLocalities[i].bg.Close()
 		}
 		return true
 	}
