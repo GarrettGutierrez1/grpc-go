@@ -39,6 +39,6 @@ type SocketOptionData struct {
 // Windows OS doesn't support Socket Option
 func (s *SocketOptionData) Getsockopt(fd uintptr) {
 	once.Do(func() {
-		grpclog.Warningln("Channelz: socket options are not supported on non-linux os and appengine.")
+		grpclog.CHANNELZ.Warning("Channelz: socket options are not supported on non-linux os and appengine.")
 	})
 }

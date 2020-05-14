@@ -131,13 +131,13 @@ func (edsImpl *edsBalancerImpl) handlePriorityWithNewState(priority priorityType
 	defer edsImpl.priorityMu.Unlock()
 
 	if !edsImpl.priorityInUse.isSet() {
-		grpclog.Infof("eds: received picker update when no priority is in use (EDS returned an empty list)")
+		grpclog.XDS.Infof("eds: received picker update when no priority is in use (EDS returned an empty list)")
 		return false
 	}
 
 	if edsImpl.priorityInUse.higherThan(priority) {
 		// Lower priorities should all be closed, this is an unexpected update.
-		grpclog.Infof("eds: received picker update from priority lower then priorityInUse")
+		grpclog.XDS.Infof("eds: received picker update from priority lower then priorityInUse")
 		return false
 	}
 

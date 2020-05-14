@@ -52,7 +52,7 @@ func NewLoggerFromConfigString(s string) Logger {
 	methods := strings.Split(s, ",")
 	for _, method := range methods {
 		if err := l.fillMethodLoggerWithConfigString(method); err != nil {
-			grpclog.Warningf("failed to parse binary log config: %v", err)
+			grpclog.BINARYLOG.Warningf("failed to parse binary log config: %v", err)
 			return nil
 		}
 	}

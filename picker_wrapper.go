@@ -145,7 +145,7 @@ func (pw *pickerWrapper) pick(ctx context.Context, failfast bool, info balancer.
 
 		acw, ok := pickResult.SubConn.(*acBalancerWrapper)
 		if !ok {
-			grpclog.Error("subconn returned from pick is not *acBalancerWrapper")
+			grpclog.CORE.Error("subconn returned from pick is not *acBalancerWrapper")
 			continue
 		}
 		if t, ok := acw.getAddrConn().getReadyTransport(); ok {
@@ -159,7 +159,7 @@ func (pw *pickerWrapper) pick(ctx context.Context, failfast bool, info balancer.
 			// DoneInfo with default value works.
 			pickResult.Done(balancer.DoneInfo{})
 		}
-		grpclog.Infof("blockingPicker: the picked transport is not ready, loop back to repick")
+		grpclog.CORE.Infof("blockingPicker: the picked transport is not ready, loop back to repick")
 		// If ok == false, ac.state is not READY.
 		// A valid picker always returns READY subConn. This means the state of ac
 		// just changed, and picker will be updated shortly.

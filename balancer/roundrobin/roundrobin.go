@@ -45,7 +45,7 @@ func init() {
 type rrPickerBuilder struct{}
 
 func (*rrPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
-	grpclog.Infof("roundrobinPicker: newPicker called with info: %v", info)
+	grpclog.ROUNDROBIN.Infof("roundrobinPicker: newPicker called with info: %v", info)
 	if len(info.ReadySCs) == 0 {
 		return base.NewErrPicker(balancer.ErrNoSubConnAvailable)
 	}

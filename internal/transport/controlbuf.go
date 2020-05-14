@@ -658,7 +658,7 @@ func (l *loopyWriter) writeHeader(streamID uint32, endStream bool, hf []hpack.He
 	l.hBuf.Reset()
 	for _, f := range hf {
 		if err := l.hEnc.WriteField(f); err != nil {
-			warningf("transport: loopyWriter.writeHeader encountered error while encoding headers:", err)
+			warningf("transport: loopyWriter.writeHeader encountered error while encoding headers: %v", err)
 		}
 	}
 	var (

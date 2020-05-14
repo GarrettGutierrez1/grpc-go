@@ -268,7 +268,7 @@ func parseServiceConfig(js string) *serviceconfig.ParseResult {
 	var rsc jsonSC
 	err := json.Unmarshal([]byte(js), &rsc)
 	if err != nil {
-		grpclog.Warningf("grpc: parseServiceConfig error unmarshaling %s due to %v", js, err)
+		grpclog.CORE.Warningf("grpc: parseServiceConfig error unmarshaling %s due to %v", js, err)
 		return &serviceconfig.ParseResult{Err: err}
 	}
 	sc := ServiceConfig{
@@ -294,7 +294,7 @@ func parseServiceConfig(js string) *serviceconfig.ParseResult {
 		}
 		d, err := parseDuration(m.Timeout)
 		if err != nil {
-			grpclog.Warningf("grpc: parseServiceConfig error unmarshaling %s due to %v", js, err)
+			grpclog.CORE.Warningf("grpc: parseServiceConfig error unmarshaling %s due to %v", js, err)
 			return &serviceconfig.ParseResult{Err: err}
 		}
 
@@ -303,7 +303,7 @@ func parseServiceConfig(js string) *serviceconfig.ParseResult {
 			Timeout:      d,
 		}
 		if mc.retryPolicy, err = convertRetryPolicy(m.RetryPolicy); err != nil {
-			grpclog.Warningf("grpc: parseServiceConfig error unmarshaling %s due to %v", js, err)
+			grpclog.CORE.Warningf("grpc: parseServiceConfig error unmarshaling %s due to %v", js, err)
 			return &serviceconfig.ParseResult{Err: err}
 		}
 		if m.MaxRequestMessageBytes != nil {
@@ -356,7 +356,7 @@ func convertRetryPolicy(jrp *jsonRetryPolicy) (p *retryPolicy, err error) {
 		*mb <= 0 ||
 		jrp.BackoffMultiplier <= 0 ||
 		len(jrp.RetryableStatusCodes) == 0 {
-		grpclog.Warningf("grpc: ignoring retry policy %v due to illegal configuration", jrp)
+		grpclog.CORE.Warningf("grpc: ignoring retry policy %v due to illegal configuration", jrp)
 		return nil, nil
 	}
 
