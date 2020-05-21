@@ -24,7 +24,7 @@ import (
 	"google.golang.org/grpc/grpclog"
 )
 
-// Info logs through grpclog.CHANNELZ.Info and adds a trace event if channelz is on.
+// Info logs through grpclog.Channelz.Info and adds a trace event if channelz is on.
 func Info(id int64, args ...interface{}) {
 	if IsOn() {
 		AddTraceEvent(id, 1, &TraceEventDesc{
@@ -36,7 +36,7 @@ func Info(id int64, args ...interface{}) {
 	}
 }
 
-// Infof logs through grpclog.CHANNELZ.Infof and adds a trace event if channelz is on.
+// Infof logs through grpclog.Channelz.Infof and adds a trace event if channelz is on.
 func Infof(id int64, format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	if IsOn() {
@@ -49,7 +49,7 @@ func Infof(id int64, format string, args ...interface{}) {
 	}
 }
 
-// Warning logs through grpclog.CHANNELZ.Warning and adds a trace event if channelz is on.
+// Warning logs through grpclog.Channelz.Warning and adds a trace event if channelz is on.
 func Warning(id int64, args ...interface{}) {
 	if IsOn() {
 		AddTraceEvent(id, 1, &TraceEventDesc{
@@ -61,7 +61,7 @@ func Warning(id int64, args ...interface{}) {
 	}
 }
 
-// Warningf logs through grpclog.CHANNELZ.Warningf and adds a trace event if channelz is on.
+// Warningf logs through grpclog.Channelz.Warningf and adds a trace event if channelz is on.
 func Warningf(id int64, format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	if IsOn() {
@@ -74,7 +74,7 @@ func Warningf(id int64, format string, args ...interface{}) {
 	}
 }
 
-// Error logs through grpclog.CHANNELZ.Error and adds a trace event if channelz is on.
+// Error logs through grpclog.Channelz.Error and adds a trace event if channelz is on.
 func Error(id int64, args ...interface{}) {
 	if IsOn() {
 		AddTraceEvent(id, 1, &TraceEventDesc{
@@ -86,7 +86,7 @@ func Error(id int64, args ...interface{}) {
 	}
 }
 
-// Errorf logs through grpclog.CHANNELZ.Errorf and adds a trace event if channelz is on.
+// Errorf logs through grpclog.Channelz.Errorf and adds a trace event if channelz is on.
 func Errorf(id int64, format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	if IsOn() {

@@ -34,7 +34,7 @@ var once sync.Once
 
 func log() {
 	once.Do(func() {
-		grpclog.TRANSPORT.Info("CPU time info is unavailable on non-linux or appengine environment.")
+		grpclog.Transport.Info("CPU time info is unavailable on non-linux or appengine environment.")
 	})
 }
 
