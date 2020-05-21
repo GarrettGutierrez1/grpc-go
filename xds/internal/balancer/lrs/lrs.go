@@ -310,25 +310,25 @@ func (ls *lrsStore) ReportTo(ctx context.Context, cc *grpc.ClientConn, clusterNa
 		doBackoff = true
 		stream, err := c.StreamLoadStats(ctx)
 		if err != nil {
-			grpclog.XDS.Warningf("lrs: failed to create stream: %v", err)
+			grpclog.Xds.Warningf("lrs: failed to create stream: %v", err)
 			continue
 		}
-		grpclog.XDS.Infof("lrs: created LRS stream")
+		grpclog.Xds.Infof("lrs: created LRS stream")
 		req := &lrspb.LoadStatsRequest{Node: node}
-		grpclog.XDS.Infof("lrs: sending init LoadStatsRequest: %v", req)
+		grpclog.Xds.Infof("lrs: sending init LoadStatsRequest: %v", req)
 		if err := stream.Send(req); err != nil {
-			grpclog.XDS.Warningf("lrs: failed to send first request: %v", err)
+			grpclog.Xds.Warningf("lrs: failed to send first request: %v", err)
 			continue
 		}
 		first, err := stream.Recv()
 		if err != nil {
-			grpclog.XDS.Warningf("lrs: failed to receive first response: %v", err)
+			grpclog.Xds.Warningf("lrs: failed to receive first response: %v", err)
 			continue
 		}
-		grpclog.XDS.Infof("lrs: received first LoadStatsResponse: %+v", first)
+		grpclog.Xds.Infof("lrs: received first LoadStatsResponse: %+v", first)
 		interval, err := ptypes.Duration(first.LoadReportingInterval)
 		if err != nil {
-			grpclog.XDS.Warningf("lrs: failed to convert report interval: %v", err)
+			grpclog.Xds.Warningf("lrs: failed to convert report interval: %v", err)
 			continue
 		}
 		// The LRS client should join the clusters it knows with the cluster
@@ -343,12 +343,12 @@ func (ls *lrsStore) ReportTo(ctx context.Context, cc *grpc.ClientConn, clusterNa
 			}
 		}
 		if !clusterFoundInResponse {
-			grpclog.XDS.Warningf("lrs: received clusters %v does not contain expected {%v}", first.Clusters, clusterName)
+			grpclog.Xds.Warningf("lrs: received clusters %v does not contain expected {%v}", first.Clusters, clusterName)
 			continue
 		}
 		if first.ReportEndpointGranularity {
 			// TODO: fixme to support per endpoint loads.
-			grpclog.XDS.Warningf("lrs: endpoint loads requested, but not supported by current implementation")
+			grpclog.Xds.Warningf("lrs: endpoint loads requested, but not supported by current implementation")
 			continue
 		}
 
@@ -369,9 +369,9 @@ func (ls *lrsStore) sendLoads(ctx context.Context, stream lrsgrpc.LoadReportingS
 			return
 		}
 		req := &lrspb.LoadStatsRequest{ClusterStats: ls.buildStats(clusterName)}
-		grpclog.XDS.Infof("lrs: sending LRS loads: %+v", req)
+		grpclog.Xds.Infof("lrs: sending LRS loads: %+v", req)
 		if err := stream.Send(req); err != nil {
-			grpclog.XDS.Warningf("lrs: failed to send report: %v", err)
+			grpclog.Xds.Warningf("lrs: failed to send report: %v", err)
 			return
 		}
 	}

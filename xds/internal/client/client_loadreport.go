@@ -53,7 +53,7 @@ func (c *Client) ReportLoad(server string, clusterName string, loadStore lrs.Sto
 		ccNew, err := grpc.Dial(server, dopts...)
 		if err != nil {
 			// An error from a non-blocking dial indicates something serious.
-			grpclog.XDS.Infof("xds: failed to dial load report server {%s}: %v", server, err)
+			grpclog.Xds.Infof("xds: failed to dial load report server {%s}: %v", server, err)
 			return func() {}
 		}
 		cc = ccNew

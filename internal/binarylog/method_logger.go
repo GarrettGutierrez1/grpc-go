@@ -219,12 +219,12 @@ func (c *ClientMessage) toProto() *pb.GrpcLogEntry {
 	if m, ok := c.Message.(proto.Message); ok {
 		data, err = proto.Marshal(m)
 		if err != nil {
-			grpclog.BINARYLOG.Infof("binarylogging: failed to marshal proto message: %v", err)
+			grpclog.BinaryLog.Infof("binarylogging: failed to marshal proto message: %v", err)
 		}
 	} else if b, ok := c.Message.([]byte); ok {
 		data = b
 	} else {
-		grpclog.BINARYLOG.Infof("binarylogging: message to log is neither proto.message nor []byte")
+		grpclog.BinaryLog.Infof("binarylogging: message to log is neither proto.message nor []byte")
 	}
 	ret := &pb.GrpcLogEntry{
 		Type: pb.GrpcLogEntry_EVENT_TYPE_CLIENT_MESSAGE,
@@ -259,12 +259,12 @@ func (c *ServerMessage) toProto() *pb.GrpcLogEntry {
 	if m, ok := c.Message.(proto.Message); ok {
 		data, err = proto.Marshal(m)
 		if err != nil {
-			grpclog.BINARYLOG.Infof("binarylogging: failed to marshal proto message: %v", err)
+			grpclog.BinaryLog.Infof("binarylogging: failed to marshal proto message: %v", err)
 		}
 	} else if b, ok := c.Message.([]byte); ok {
 		data = b
 	} else {
-		grpclog.BINARYLOG.Infof("binarylogging: message to log is neither proto.message nor []byte")
+		grpclog.BinaryLog.Infof("binarylogging: message to log is neither proto.message nor []byte")
 	}
 	ret := &pb.GrpcLogEntry{
 		Type: pb.GrpcLogEntry_EVENT_TYPE_SERVER_MESSAGE,
@@ -315,7 +315,7 @@ type ServerTrailer struct {
 func (c *ServerTrailer) toProto() *pb.GrpcLogEntry {
 	st, ok := status.FromError(c.Err)
 	if !ok {
-		grpclog.BINARYLOG.Info("binarylogging: error in trailer is not a status error")
+		grpclog.BinaryLog.Info("binarylogging: error in trailer is not a status error")
 	}
 	var (
 		detailsBytes []byte
@@ -325,7 +325,7 @@ func (c *ServerTrailer) toProto() *pb.GrpcLogEntry {
 	if stProto != nil && len(stProto.Details) != 0 {
 		detailsBytes, err = proto.Marshal(stProto)
 		if err != nil {
-			grpclog.BINARYLOG.Infof("binarylogging: failed to marshal status proto: %v", err)
+			grpclog.BinaryLog.Infof("binarylogging: failed to marshal status proto: %v", err)
 		}
 	}
 	ret := &pb.GrpcLogEntry{

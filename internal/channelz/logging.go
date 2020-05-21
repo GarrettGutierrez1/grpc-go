@@ -32,7 +32,7 @@ func Info(id int64, args ...interface{}) {
 			Severity: CtINFO,
 		})
 	} else {
-		grpclog.CHANNELZ.InfoDepth(1, args...)
+		grpclog.Channelz.InfoDepth(1, args...)
 	}
 }
 
@@ -45,7 +45,7 @@ func Infof(id int64, format string, args ...interface{}) {
 			Severity: CtINFO,
 		})
 	} else {
-		grpclog.CHANNELZ.InfoDepth(1, msg)
+		grpclog.Channelz.InfoDepth(1, msg)
 	}
 }
 
@@ -57,7 +57,7 @@ func Warning(id int64, args ...interface{}) {
 			Severity: CtWarning,
 		})
 	} else {
-		grpclog.CHANNELZ.WarningDepth(1, args...)
+		grpclog.Channelz.WarningDepth(1, args...)
 	}
 }
 
@@ -70,7 +70,7 @@ func Warningf(id int64, format string, args ...interface{}) {
 			Severity: CtWarning,
 		})
 	} else {
-		grpclog.CHANNELZ.WarningDepth(1, msg)
+		grpclog.Channelz.WarningDepth(1, msg)
 	}
 }
 
@@ -82,7 +82,7 @@ func Error(id int64, args ...interface{}) {
 			Severity: CtError,
 		})
 	} else {
-		grpclog.CHANNELZ.ErrorDepth(1, args...)
+		grpclog.Channelz.ErrorDepth(1, args...)
 	}
 }
 
@@ -95,6 +95,6 @@ func Errorf(id int64, format string, args ...interface{}) {
 			Severity: CtError,
 		})
 	} else {
-		grpclog.CHANNELZ.ErrorDepth(1, msg)
+		grpclog.Channelz.ErrorDepth(1, msg)
 	}
 }

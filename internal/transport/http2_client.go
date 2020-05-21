@@ -35,6 +35,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/internal"
 	"google.golang.org/grpc/internal/channelz"
 	"google.golang.org/grpc/internal/syscall"
@@ -352,7 +353,9 @@ func newHTTP2Client(connectCtx, ctx context.Context, addr resolver.Address, opts
 		t.loopy = newLoopyWriter(clientSide, t.framer, t.controlBuf, t.bdpEst)
 		err := t.loopy.run()
 		if err != nil {
-			errorf("transport: loopyWriter.run returning. Err: %v", err)
+			if grpclog.Transport.V(logLevel) {
+				grpclog.Transport.Errorf("transport: loopyWriter.run returning. Err: %v", err)
+			}
 		}
 		// If it's a connection error, let reader goroutine handle it
 		// since there might be data in the buffers.
@@ -1006,7 +1009,9 @@ func (t *http2Client) handleRSTStream(f *http2.RSTStreamFrame) {
 	}
 	statusCode, ok := http2ErrConvTab[f.ErrCode]
 	if !ok {
-		warningf("transport: http2Client.handleRSTStream found no mapped gRPC status for the received http2 error %v", f.ErrCode)
+		if grpclog.Transport.V(logLevel) {
+			grpclog.Transport.Warningf("transport: http2Client.handleRSTStream found no mapped gRPC status for the received http2 error %v", f.ErrCode)
+		}
 		statusCode = codes.Unknown
 	}
 	if statusCode == codes.Canceled {
@@ -1088,7 +1093,9 @@ func (t *http2Client) handleGoAway(f *http2.GoAwayFrame) {
 		return
 	}
 	if f.ErrCode == http2.ErrCodeEnhanceYourCalm {
-		infof("Client received GoAway with http2.ErrCodeEnhanceYourCalm.")
+		if grpclog.Transport.V(logLevel) {
+			grpclog.Transport.Infof("Client received GoAway with http2.ErrCodeEnhanceYourCalm.")
+		}
 	}
 	id := f.LastStreamID
 	if id > 0 && id%2 != 1 {
@@ -1318,7 +1325,9 @@ func (t *http2Client) reader() {
 		case *http2.WindowUpdateFrame:
 			t.handleWindowUpdate(frame)
 		default:
-			errorf("transport: http2Client.reader got unhandled frame type %v.", frame)
+			if grpclog.Transport.V(logLevel) {
+				grpclog.Transport.Errorf("transport: http2Client.reader got unhandled frame type %v.", frame)
+			}
 		}
 	}
 }

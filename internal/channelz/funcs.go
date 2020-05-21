@@ -216,7 +216,7 @@ func RegisterChannel(c Channel, pid int64, ref string) int64 {
 // by pid). It returns the unique channelz tracking id assigned to this subchannel.
 func RegisterSubChannel(c Channel, pid int64, ref string) int64 {
 	if pid == 0 {
-		grpclog.CHANNELZ.Error("a SubChannel's parent id cannot be 0")
+		grpclog.Channelz.Error("a SubChannel's parent id cannot be 0")
 		return 0
 	}
 	id := idGen.genID()
@@ -253,7 +253,7 @@ func RegisterServer(s Server, ref string) int64 {
 // this listen socket.
 func RegisterListenSocket(s Socket, pid int64, ref string) int64 {
 	if pid == 0 {
-		grpclog.CHANNELZ.Error("a ListenSocket's parent id cannot be 0")
+		grpclog.Channelz.Error("a ListenSocket's parent id cannot be 0")
 		return 0
 	}
 	id := idGen.genID()
@@ -268,7 +268,7 @@ func RegisterListenSocket(s Socket, pid int64, ref string) int64 {
 // this normal socket.
 func RegisterNormalSocket(s Socket, pid int64, ref string) int64 {
 	if pid == 0 {
-		grpclog.CHANNELZ.Error("a NormalSocket's parent id cannot be 0")
+		grpclog.Channelz.Error("a NormalSocket's parent id cannot be 0")
 		return 0
 	}
 	id := idGen.genID()
@@ -298,13 +298,13 @@ func AddTraceEvent(id int64, depth int, desc *TraceEventDesc) {
 	for d := desc; d != nil; d = d.Parent {
 		switch d.Severity {
 		case CtUNKNOWN:
-			grpclog.CHANNELZ.InfoDepth(depth+1, d.Desc)
+			grpclog.Channelz.InfoDepth(depth+1, d.Desc)
 		case CtINFO:
-			grpclog.CHANNELZ.InfoDepth(depth+1, d.Desc)
+			grpclog.Channelz.InfoDepth(depth+1, d.Desc)
 		case CtWarning:
-			grpclog.CHANNELZ.WarningDepth(depth+1, d.Desc)
+			grpclog.Channelz.WarningDepth(depth+1, d.Desc)
 		case CtError:
-			grpclog.CHANNELZ.ErrorDepth(depth+1, d.Desc)
+			grpclog.Channelz.ErrorDepth(depth+1, d.Desc)
 		}
 	}
 	if getMaxTraceEntry() == 0 {

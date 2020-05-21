@@ -238,11 +238,11 @@ func (*rlsBB) ParseConfig(c json.RawMessage) (serviceconfig.LoadBalancingConfig,
 		return nil, fmt.Errorf("rls: stale_age is set, but max_age is not in service config {%+v}", string(c))
 	}
 	if staleAge >= maxAge {
-		grpclog.RLS.Info("rls: stale_age {%v} is greater than max_age {%v}, ignoring it", staleAge, maxAge)
+		grpclog.Rls.Info("rls: stale_age {%v} is greater than max_age {%v}, ignoring it", staleAge, maxAge)
 		staleAge = 0
 	}
 	if maxAge == 0 || maxAge > maxMaxAge {
-		grpclog.RLS.Infof("rls: max_age in service config is %v, using %v", maxAge, maxMaxAge)
+		grpclog.Rls.Infof("rls: max_age in service config is %v, using %v", maxAge, maxMaxAge)
 		maxAge = maxMaxAge
 	}
 

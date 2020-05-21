@@ -307,7 +307,7 @@ func compareRPCVersions(v1, v2 *altspb.RpcProtocolVersions_Version) int {
 // agreed on.
 func checkRPCVersions(local, peer *altspb.RpcProtocolVersions) (bool, *altspb.RpcProtocolVersions_Version) {
 	if local == nil || peer == nil {
-		grpclog.ALTS.Error("invalid checkRPCVersions argument, either local or peer is nil.")
+		grpclog.Alts.Error("invalid checkRPCVersions argument, either local or peer is nil.")
 		return false, nil
 	}
 

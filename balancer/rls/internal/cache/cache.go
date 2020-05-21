@@ -175,7 +175,7 @@ func (lru *LRU) removeToFit(newSize int64) {
 		if elem == nil {
 			// This is a corner case where the cache is empty, but the new entry
 			// to be added is bigger than maxSize.
-			grpclog.RLS.Info("rls: newly added cache entry exceeds cache maxSize")
+			grpclog.Rls.Info("rls: newly added cache entry exceeds cache maxSize")
 			return
 		}
 
@@ -184,7 +184,7 @@ func (lru *LRU) removeToFit(newSize int64) {
 			// When the oldest entry is too new (it hasn't even spent a default
 			// minimum amount of time in the cache), we abort and allow the
 			// cache to grow bigger than the configured maxSize.
-			grpclog.RLS.Info("rls: LRU eviction finds oldest entry to be too new. Allowing cache to exceed maxSize momentarily")
+			grpclog.Rls.Info("rls: LRU eviction finds oldest entry to be too new. Allowing cache to exceed maxSize momentarily")
 			return
 		}
 		lru.removeElement(elem)

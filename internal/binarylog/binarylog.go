@@ -149,7 +149,7 @@ func (l *logger) setBlacklist(method string) error {
 func (l *logger) getMethodLogger(methodName string) *MethodLogger {
 	s, m, err := grpcutil.ParseMethod(methodName)
 	if err != nil {
-		grpclog.BINARYLOG.Infof("binarylogging: failed to parse %q: %v", methodName, err)
+		grpclog.BinaryLog.Infof("binarylogging: failed to parse %q: %v", methodName, err)
 		return nil
 	}
 	if ml, ok := l.methods[s+"/"+m]; ok {

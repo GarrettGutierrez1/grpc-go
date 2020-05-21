@@ -44,8 +44,8 @@ import (
 // processServerList updates balancer's internal state, create/remove SubConns
 // and regenerates picker using the received serverList.
 func (lb *lbBalancer) processServerList(l *lbpb.ServerList) {
-	if grpclog.GRPCLB.V(2) {
-		grpclog.GRPCLB.Infof("lbBalancer: processing server list: %+v", l)
+	if grpclog.Grpclb.V(2) {
+		grpclog.Grpclb.Infof("lbBalancer: processing server list: %+v", l)
 	}
 	lb.mu.Lock()
 	defer lb.mu.Unlock()
@@ -56,8 +56,8 @@ func (lb *lbBalancer) processServerList(l *lbpb.ServerList) {
 
 	// If the new server list == old server list, do nothing.
 	if cmp.Equal(lb.fullServerList, l.Servers, cmp.Comparer(proto.Equal)) {
-		if grpclog.GRPCLB.V(2) {
-			grpclog.GRPCLB.Infof("lbBalancer: new serverlist same as the previous one, ignoring")
+		if grpclog.Grpclb.V(2) {
+			grpclog.Grpclb.Infof("lbBalancer: new serverlist same as the previous one, ignoring")
 		}
 		return
 	}
@@ -81,8 +81,8 @@ func (lb *lbBalancer) processServerList(l *lbpb.ServerList) {
 			Addr:     fmt.Sprintf("%s:%d", ipStr, s.Port),
 			Metadata: &md,
 		}
-		if grpclog.GRPCLB.V(2) {
-			grpclog.GRPCLB.Infof("lbBalancer: server list entry[%d]: ipStr:|%s|, port:|%d|, load balancer token:|%v|",
+		if grpclog.Grpclb.V(2) {
+			grpclog.Grpclb.Infof("lbBalancer: server list entry[%d]: ipStr:|%s|, port:|%d|, load balancer token:|%v|",
 				i, ipStr, s.Port, s.LoadBalanceToken)
 		}
 		backendAddrs = append(backendAddrs, addr)
@@ -150,7 +150,7 @@ func (lb *lbBalancer) refreshSubConns(backendAddrs []resolver.Address, fallback 
 		// This bypasses the cc wrapper with SubConn cache.
 		sc, err := lb.cc.cc.NewSubConn(backendAddrs, opts)
 		if err != nil {
-			grpclog.GRPCLB.Warningf("grpclb: failed to create new SubConn: %v", err)
+			grpclog.Grpclb.Warningf("grpclb: failed to create new SubConn: %v", err)
 			return
 		}
 		sc.Connect()
@@ -173,7 +173,7 @@ func (lb *lbBalancer) refreshSubConns(backendAddrs []resolver.Address, fallback 
 			// Use addrWithMD to create the SubConn.
 			sc, err := lb.cc.NewSubConn([]resolver.Address{addr}, opts)
 			if err != nil {
-				grpclog.GRPCLB.Warningf("grpclb: failed to create new SubConn: %v", err)
+				grpclog.Grpclb.Warningf("grpclb: failed to create new SubConn: %v", err)
 				continue
 			}
 			lb.subConns[addrWithoutMD] = sc // Use the addr without MD as key for the map.
@@ -245,7 +245,7 @@ func (lb *lbBalancer) newRemoteBalancerCCWrapper() {
 	// receive ServerName as authority.
 	cc, err := grpc.DialContext(context.Background(), lb.manualResolver.Scheme()+":///grpclb.subClientConn", dopts...)
 	if err != nil {
-		grpclog.GRPCLB.Fatalf("failed to dial: %v", err)
+		grpclog.Grpclb.Fatalf("failed to dial: %v", err)
 	}
 	ccw := &remoteBalancerCCWrapper{
 		cc:      cc,
@@ -373,9 +373,9 @@ func (ccw *remoteBalancerCCWrapper) watchRemoteBalancer() {
 		default:
 			if err != nil {
 				if err == errServerTerminatedConnection {
-					grpclog.GRPCLB.Info(err)
+					grpclog.Grpclb.Info(err)
 				} else {
-					grpclog.GRPCLB.Warning(err)
+					grpclog.Grpclb.Warning(err)
 				}
 			}
 		}

@@ -35,7 +35,7 @@ func toBytes(r *orcapb.OrcaLoadReport) []byte {
 
 	b, err := proto.Marshal(r)
 	if err != nil {
-		grpclog.XDS.Warningf("orca: failed to marshal load report: %v", err)
+		grpclog.Xds.Warningf("orca: failed to marshal load report: %v", err)
 		return nil
 	}
 	return b
@@ -54,7 +54,7 @@ func ToMetadata(r *orcapb.OrcaLoadReport) metadata.MD {
 func fromBytes(b []byte) *orcapb.OrcaLoadReport {
 	ret := new(orcapb.OrcaLoadReport)
 	if err := proto.Unmarshal(b, ret); err != nil {
-		grpclog.XDS.Warningf("orca: failed to unmarshal load report: %v", err)
+		grpclog.Xds.Warningf("orca: failed to unmarshal load report: %v", err)
 		return nil
 	}
 	return ret

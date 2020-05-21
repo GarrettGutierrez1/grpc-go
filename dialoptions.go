@@ -423,7 +423,7 @@ func WithUserAgent(s string) DialOption {
 // for the client transport.
 func WithKeepaliveParams(kp keepalive.ClientParameters) DialOption {
 	if kp.Time < internal.KeepaliveMinPingTime {
-		grpclog.CORE.Warningf("Adjusting keepalive ping interval to minimum period of %v", internal.KeepaliveMinPingTime)
+		grpclog.Core.Warningf("Adjusting keepalive ping interval to minimum period of %v", internal.KeepaliveMinPingTime)
 		kp.Time = internal.KeepaliveMinPingTime
 	}
 	return newFuncDialOption(func(o *dialOptions) {
