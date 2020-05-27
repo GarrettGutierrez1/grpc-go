@@ -69,6 +69,7 @@ func parseEnvironmentVar(envVar string) (map[string]*ComponentData, map[string]*
 		varPairList := strings.Split(varPair, ":")
 		if len(varPairList) != 2 {
 			fmt.Fprintf(os.Stderr, "error: could not parse '%v' value '%v', unrecognized key-value pair '%v'\n", envName, envVar, varPair)
+			continue
 		}
 		if cData, ok := parseVar(varPairList[0], varPairList[1]); ok {
 			if varPrefix, ok := getPrefix(varPairList[0]); ok {
