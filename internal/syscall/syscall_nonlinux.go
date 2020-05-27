@@ -26,9 +26,12 @@ import (
 	"net"
 	"sync"
 	"time"
+
+	"google.golang.org/grpc/grpclog"
 )
 
 var once sync.Once
+var logger = grpclog.Component("TRANSPORT")
 
 func log() {
 	once.Do(func() {
