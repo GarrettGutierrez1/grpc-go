@@ -26,15 +26,13 @@ import (
 	"net"
 	"sync"
 	"time"
-
-	"google.golang.org/grpc/grpclog"
 )
 
 var once sync.Once
 
 func log() {
 	once.Do(func() {
-		grpclog.Transport.Info("CPU time info is unavailable on non-linux or appengine environment.")
+		logger.Info("CPU time info is unavailable on non-linux or appengine environment.")
 	})
 }
 

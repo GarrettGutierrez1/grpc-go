@@ -45,34 +45,9 @@ const (
 	levelError   = 2
 )
 
-// grpc components
-var (
-	Core       = ComponentData{"CORE", 0, 0}
-	Alts       = ComponentData{"ALTS", 0, 0}
-	Grpclb     = ComponentData{"BALANCER_GRPCLB", 0, 0}
-	Rls        = ComponentData{"BALANCER_RLS", 0, 0}
-	RoundRobin = ComponentData{"BALANCER_ROUNDROBIN", 0, 0}
-	BinaryLog  = ComponentData{"BINARYLOG", 0, 0}
-	Channelz   = ComponentData{"CHANNELZ", 0, 0}
-	DNS        = ComponentData{"RESOLVER_DNS", 0, 0}
-	Transport  = ComponentData{"TRANSPORT", 0, 0}
-	Xds        = ComponentData{"XDS", 0, 0}
-)
-
-var grpcComponents = []*ComponentData{
-	&Core,
-	&Alts,
-	&Grpclb,
-	&Rls,
-	&RoundRobin,
-	&BinaryLog,
-	&Channelz,
-	&DNS,
-	&Transport,
-	&Xds,
-}
 var environmentVars = map[string]*ComponentData{}
 var prefixVars = map[string]*ComponentData{}
+var cache = map[string]*ComponentData{}
 
 // init creates all grpc components and any components named in the environment
 // variable and applies all settings specified in the environment variable.
@@ -81,38 +56,31 @@ var prefixVars = map[string]*ComponentData{}
 func init() {
 	// Pull environment variable data and put in environmentVars and prefixVars
 	if envVar, ok := os.LookupEnv(envName); ok && len(envVar) > 0 {
-		varList := strings.Split(envVar, ",")
-		for _, varPair := range varList {
-			varPairList := strings.Split(varPair, ":")
-			if len(varPairList) != 2 {
-				fmt.Fprintf(os.Stderr, "error: could not parse %v value '%v', unrecognized key-value pair '%v'\n", envName, envVar, varPair)
-				os.Exit(1)
-			}
-			if cData, ok := parseVar(varPairList[0], varPairList[1]); ok {
-				if varPrefix, ok := getPrefix(varPairList[0]); ok {
-					prefixVars[varPrefix] = &cData
-				} else {
-					environmentVars[varPairList[0]] = &cData
-				}
+		environmentVars, prefixVars = parseEnvironmentVar(envVar)
+	}
+}
+
+// parseEnvironmentVar parses an environment variable string and pulls the component settings data.
+func parseEnvironmentVar(envVar string) (map[string]*ComponentData, map[string]*ComponentData) {
+	envVars := map[string]*ComponentData{}
+	preVars := map[string]*ComponentData{}
+	varList := strings.Split(envVar, ",")
+	for _, varPair := range varList {
+		varPairList := strings.Split(varPair, ":")
+		if len(varPairList) != 2 {
+			fmt.Fprintf(os.Stderr, "error: could not parse '%v' value '%v', unrecognized key-value pair '%v'\n", envName, envVar, varPair)
+		}
+		if cData, ok := parseVar(varPairList[0], varPairList[1]); ok {
+			if varPrefix, ok := getPrefix(varPairList[0]); ok {
+				preVars[varPrefix] = &cData
 			} else {
-				fmt.Fprintf(os.Stderr, "error: could not parse %v value '%v', unrecognized value '%v'\n", envName, envVar, varPairList[1])
-				os.Exit(1)
+				envVars[varPairList[0]] = &cData
 			}
+		} else {
+			fmt.Fprintf(os.Stderr, "error: could not parse '%v' value '%v', unrecognized value '%v'\n", envName, envVar, varPairList[1])
 		}
 	}
-	// Apply environment variables to grpcComponents
-	for _, cData := range grpcComponents {
-		// Apply prefix settings
-		for prefix, pData := range prefixVars {
-			if strings.HasPrefix(cData.name, prefix) {
-				cData.apply(pData)
-			}
-		}
-		// Apply specific settings
-		if vData, ok := environmentVars[cData.name]; ok {
-			cData.apply(vData)
-		}
-	}
+	return envVars, preVars
 }
 
 // apply applies the parameter componentData to the receiver ComponentData.
@@ -240,10 +208,13 @@ func (c *ComponentData) V(l int) bool {
 	return c.verbosity >= l
 }
 
-// Component creates a new component and returns its identifier used for
-// logging. If a component with the name already exists, nothing will be created
-// and its identifier will be returned.
-func Component(componentName string) ComponentData {
+// Component creates a new component and returns it for logging. If a component
+// with the name already exists, nothing will be created and it will be
+// returned.
+func Component(componentName string) *ComponentData {
+	if cData, ok := cache[componentName]; ok {
+		return cData
+	}
 	c := ComponentData{componentName, 0, 0}
 	// Apply prefix settings
 	for prefix, pData := range prefixVars {
@@ -255,5 +226,6 @@ func Component(componentName string) ComponentData {
 	if vData, ok := environmentVars[c.name]; ok {
 		c.apply(vData)
 	}
-	return c
+	cache[componentName] = &c
+	return &c
 }

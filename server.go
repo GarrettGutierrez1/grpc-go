@@ -59,6 +59,7 @@ const (
 )
 
 var statusOK = status.New(codes.OK, "")
+var logger = grpclog.Component("CORE")
 
 type methodHandler func(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor UnaryServerInterceptor) (interface{}, error)
 
@@ -223,7 +224,7 @@ func InitialConnWindowSize(s int32) ServerOption {
 // KeepaliveParams returns a ServerOption that sets keepalive and max-age parameters for the server.
 func KeepaliveParams(kp keepalive.ServerParameters) ServerOption {
 	if kp.Time > 0 && kp.Time < time.Second {
-		grpclog.Core.Warning("Adjusting keepalive ping interval to minimum period of 1s")
+		logger.Warning("Adjusting keepalive ping interval to minimum period of 1s")
 		kp.Time = time.Second
 	}
 
@@ -537,7 +538,7 @@ func (s *Server) RegisterService(sd *ServiceDesc, ss interface{}) {
 	ht := reflect.TypeOf(sd.HandlerType).Elem()
 	st := reflect.TypeOf(ss)
 	if !st.Implements(ht) {
-		grpclog.Core.Fatalf("grpc: Server.RegisterService found the handler of type %v that does not satisfy %v", st, ht)
+		logger.Fatalf("grpc: Server.RegisterService found the handler of type %v that does not satisfy %v", st, ht)
 	}
 	s.register(sd, ss)
 }
@@ -547,10 +548,10 @@ func (s *Server) register(sd *ServiceDesc, ss interface{}) {
 	defer s.mu.Unlock()
 	s.printf("RegisterService(%q)", sd.ServiceName)
 	if s.serve {
-		grpclog.Core.Fatalf("grpc: Server.RegisterService after Server.Serve for %q", sd.ServiceName)
+		logger.Fatalf("grpc: Server.RegisterService after Server.Serve for %q", sd.ServiceName)
 	}
 	if _, ok := s.m[sd.ServiceName]; ok {
-		grpclog.Core.Fatalf("grpc: Server.RegisterService found duplicate service registration for %q", sd.ServiceName)
+		logger.Fatalf("grpc: Server.RegisterService found duplicate service registration for %q", sd.ServiceName)
 	}
 	srv := &service{
 		server: ss,

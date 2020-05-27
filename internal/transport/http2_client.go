@@ -35,7 +35,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/internal"
 	"google.golang.org/grpc/internal/channelz"
 	"google.golang.org/grpc/internal/syscall"
@@ -353,8 +352,8 @@ func newHTTP2Client(connectCtx, ctx context.Context, addr resolver.Address, opts
 		t.loopy = newLoopyWriter(clientSide, t.framer, t.controlBuf, t.bdpEst)
 		err := t.loopy.run()
 		if err != nil {
-			if grpclog.Transport.V(logLevel) {
-				grpclog.Transport.Errorf("transport: loopyWriter.run returning. Err: %v", err)
+			if logger.V(logLevel) {
+				logger.Errorf("transport: loopyWriter.run returning. Err: %v", err)
 			}
 		}
 		// If it's a connection error, let reader goroutine handle it
@@ -1009,8 +1008,8 @@ func (t *http2Client) handleRSTStream(f *http2.RSTStreamFrame) {
 	}
 	statusCode, ok := http2ErrConvTab[f.ErrCode]
 	if !ok {
-		if grpclog.Transport.V(logLevel) {
-			grpclog.Transport.Warningf("transport: http2Client.handleRSTStream found no mapped gRPC status for the received http2 error %v", f.ErrCode)
+		if logger.V(logLevel) {
+			logger.Warningf("transport: http2Client.handleRSTStream found no mapped gRPC status for the received http2 error %v", f.ErrCode)
 		}
 		statusCode = codes.Unknown
 	}
@@ -1093,8 +1092,8 @@ func (t *http2Client) handleGoAway(f *http2.GoAwayFrame) {
 		return
 	}
 	if f.ErrCode == http2.ErrCodeEnhanceYourCalm {
-		if grpclog.Transport.V(logLevel) {
-			grpclog.Transport.Infof("Client received GoAway with http2.ErrCodeEnhanceYourCalm.")
+		if logger.V(logLevel) {
+			logger.Infof("Client received GoAway with http2.ErrCodeEnhanceYourCalm.")
 		}
 	}
 	id := f.LastStreamID
@@ -1325,8 +1324,8 @@ func (t *http2Client) reader() {
 		case *http2.WindowUpdateFrame:
 			t.handleWindowUpdate(frame)
 		default:
-			if grpclog.Transport.V(logLevel) {
-				grpclog.Transport.Errorf("transport: http2Client.reader got unhandled frame type %v.", frame)
+			if logger.V(logLevel) {
+				logger.Errorf("transport: http2Client.reader got unhandled frame type %v.", frame)
 			}
 		}
 	}

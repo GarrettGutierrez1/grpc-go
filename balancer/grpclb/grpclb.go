@@ -48,6 +48,7 @@ const (
 )
 
 var errServerTerminatedConnection = errors.New("grpclb: failed to recv server list: server terminated connection")
+var logger = grpclog.Component("BALANCER_GRPCLB")
 
 func convertDuration(d *durationpb.Duration) time.Duration {
 	if d == nil {
@@ -148,11 +149,11 @@ func (b *lbBuilder) Build(cc balancer.ClientConn, opt balancer.BuildOptions) bal
 	if opt.CredsBundle != nil {
 		lb.grpclbClientConnCreds, err = opt.CredsBundle.NewWithMode(internal.CredsBundleModeBalancer)
 		if err != nil {
-			grpclog.Grpclb.Warningf("lbBalancer: client connection creds NewWithMode failed: %v", err)
+			logger.Warningf("lbBalancer: client connection creds NewWithMode failed: %v", err)
 		}
 		lb.grpclbBackendCreds, err = opt.CredsBundle.NewWithMode(internal.CredsBundleModeBackendFromBalancer)
 		if err != nil {
-			grpclog.Grpclb.Warningf("lbBalancer: backend creds NewWithMode failed: %v", err)
+			logger.Warningf("lbBalancer: backend creds NewWithMode failed: %v", err)
 		}
 	}
 
@@ -308,16 +309,16 @@ func (lb *lbBalancer) aggregateSubConnStates() connectivity.State {
 
 func (lb *lbBalancer) UpdateSubConnState(sc balancer.SubConn, scs balancer.SubConnState) {
 	s := scs.ConnectivityState
-	if grpclog.Grpclb.V(2) {
-		grpclog.Grpclb.Infof("lbBalancer: handle SubConn state change: %p, %v", sc, s)
+	if logger.V(2) {
+		logger.Infof("lbBalancer: handle SubConn state change: %p, %v", sc, s)
 	}
 	lb.mu.Lock()
 	defer lb.mu.Unlock()
 
 	oldS, ok := lb.scStates[sc]
 	if !ok {
-		if grpclog.Grpclb.V(2) {
-			grpclog.Grpclb.Infof("lbBalancer: got state changes for an unknown SubConn: %p, %v", sc, s)
+		if logger.V(2) {
+			logger.Infof("lbBalancer: got state changes for an unknown SubConn: %p, %v", sc, s)
 		}
 		return
 	}
@@ -391,8 +392,8 @@ func (lb *lbBalancer) handleServiceConfig(gc *grpclbServiceConfig) {
 	if lb.usePickFirst == newUsePickFirst {
 		return
 	}
-	if grpclog.Grpclb.V(2) {
-		grpclog.Grpclb.Infof("lbBalancer: switching mode, new usePickFirst: %+v", newUsePickFirst)
+	if logger.V(2) {
+		logger.Infof("lbBalancer: switching mode, new usePickFirst: %+v", newUsePickFirst)
 	}
 	lb.refreshSubConns(lb.backendAddrs, lb.inFallback, newUsePickFirst)
 }
@@ -403,8 +404,8 @@ func (lb *lbBalancer) ResolverError(error) {
 }
 
 func (lb *lbBalancer) UpdateClientConnState(ccs balancer.ClientConnState) error {
-	if grpclog.Grpclb.V(2) {
-		grpclog.Grpclb.Infof("lbBalancer: UpdateClientConnState: %+v", ccs)
+	if logger.V(2) {
+		logger.Infof("lbBalancer: UpdateClientConnState: %+v", ccs)
 	}
 	gc, _ := ccs.BalancerConfig.(*grpclbServiceConfig)
 	lb.handleServiceConfig(gc)

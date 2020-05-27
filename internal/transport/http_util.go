@@ -98,6 +98,7 @@ var (
 		// 504 Gateway timeout - UNAVAILABLE.
 		http.StatusGatewayTimeout: codes.Unavailable,
 	}
+	logger = grpclog.Component("TRANSPORT")
 )
 
 type parsedHeaderData struct {
@@ -413,8 +414,8 @@ func (d *decodeState) processHeaderField(f hpack.HeaderField) {
 		}
 		v, err := decodeMetadataHeader(f.Name, f.Value)
 		if err != nil {
-			if grpclog.Transport.V(logLevel) {
-				grpclog.Transport.Errorf("Failed to decode metadata header (%q, %q): %v", f.Name, f.Value, err)
+			if logger.V(logLevel) {
+				logger.Errorf("Failed to decode metadata header (%q, %q): %v", f.Name, f.Value, err)
 			}
 			return
 		}
