@@ -31,7 +31,7 @@ import (
 )
 
 var once sync.Once
-var logger = grpclog.Component("TRANSPORT")
+var logger = grpclog.Component("CORE")
 
 func log() {
 	once.Do(func() {
