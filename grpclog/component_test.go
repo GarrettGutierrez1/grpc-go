@@ -24,6 +24,14 @@ import (
 	"testing"
 )
 
+func toString(m *map[string]*ComponentData) string {
+	result := ""
+	for k, v := range *m {
+		result += fmt.Sprintf("\t%v: %v\n", k, *v)
+	}
+	return result
+}
+
 func parseAndCompare(t *testing.T, envVar string, envVars, preVars map[string]*ComponentData) {
 	envVarsResult, preVarsResult := parseEnvironmentVar(envVar)
 	if !reflect.DeepEqual(envVars, envVarsResult) {
@@ -34,52 +42,40 @@ func parseAndCompare(t *testing.T, envVar string, envVars, preVars map[string]*C
 	}
 }
 
-func toString(m *map[string]*ComponentData) string {
-	result := ""
-	for k, v := range *m {
-		result += fmt.Sprintf("\t%v: %v\n", k, *v)
-	}
-	return result
-}
-
-func TestLevel(t *testing.T) {
-	envVars := map[string]*ComponentData{
+var parserTests = []struct {
+	name    string
+	in      string
+	envVars map[string]*ComponentData
+	preVars map[string]*ComponentData
+}{
+	{"Level", "INFO:INFO,WARNING:WARNING,ERROR:ERROR", map[string]*ComponentData{
 		"INFO":    {"INFO", sentinel, levelInfo},
 		"WARNING": {"WARNING", sentinel, levelWarning},
 		"ERROR":   {"ERROR", sentinel, levelError},
-	}
-	preVars := map[string]*ComponentData{}
-	parseAndCompare(t, "INFO:INFO,WARNING:WARNING,ERROR:ERROR", envVars, preVars)
-}
-
-func TestVerbosity(t *testing.T) {
-	envVars := map[string]*ComponentData{
+	}, map[string]*ComponentData{}},
+	{"Verbosity", "INFO:INFO,-1:INFO_-1,0:INFO_0,1:INFO_1", map[string]*ComponentData{
 		"INFO": {"INFO", sentinel, levelInfo},
 		"-1":   {"-1", -1, levelInfo},
 		"0":    {"0", 0, levelInfo},
 		"1":    {"1", 1, levelInfo},
-	}
-	preVars := map[string]*ComponentData{}
-	parseAndCompare(t, "INFO:INFO,-1:INFO_-1,0:INFO_0,1:INFO_1", envVars, preVars)
-}
-
-func TestPrefixLevel(t *testing.T) {
-	envVars := map[string]*ComponentData{}
-	preVars := map[string]*ComponentData{
+	}, map[string]*ComponentData{}},
+	{"PrefixLevel", "PRE_INFO*:INFO,PRE_WARNING*:WARNING,PRE_ERROR*:ERROR", map[string]*ComponentData{}, map[string]*ComponentData{
 		"PRE_INFO":    {"PRE_INFO*", sentinel, levelInfo},
 		"PRE_WARNING": {"PRE_WARNING*", sentinel, levelWarning},
 		"PRE_ERROR":   {"PRE_ERROR*", sentinel, levelError},
-	}
-	parseAndCompare(t, "PRE_INFO*:INFO,PRE_WARNING*:WARNING,PRE_ERROR*:ERROR", envVars, preVars)
-}
-
-func TestPrefixVerbosity(t *testing.T) {
-	envVars := map[string]*ComponentData{}
-	preVars := map[string]*ComponentData{
+	}},
+	{"PrefixVerbosity", "PRE_INFO*:INFO,PRE_-1*:INFO_-1,PRE_0*:INFO_0,PRE_1*:INFO_1", map[string]*ComponentData{}, map[string]*ComponentData{
 		"PRE_INFO": {"PRE_INFO*", sentinel, levelInfo},
 		"PRE_-1":   {"PRE_-1*", -1, levelInfo},
 		"PRE_0":    {"PRE_0*", 0, levelInfo},
 		"PRE_1":    {"PRE_1*", 1, levelInfo},
+	}},
+}
+
+func TestEnvironmentParser(t *testing.T) {
+	for _, tt := range parserTests {
+		t.Run(tt.name, func(t *testing.T) {
+			parseAndCompare(t, tt.in, tt.envVars, tt.preVars)
+		})
 	}
-	parseAndCompare(t, "PRE_INFO*:INFO,PRE_-1*:INFO_-1,PRE_0*:INFO_0,PRE_1*:INFO_1", envVars, preVars)
 }
