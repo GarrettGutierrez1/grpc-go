@@ -16,11 +16,14 @@
  *
  */
 
-// Package balancer installs all the xds balancers.
-package balancer
+// Package xds contains xds implementation. Users need to import this package to
+// get all xds functionality.
+//
+// See https://github.com/grpc/grpc-go/tree/master/examples/features/xds for
+// example.
+package xds
 
 import (
-	_ "google.golang.org/grpc/xds/internal/balancer/cdsbalancer"    // Register the CDS balancer
-	_ "google.golang.org/grpc/xds/internal/balancer/edsbalancer"    // Register the EDS balancer
-	_ "google.golang.org/grpc/xds/internal/balancer/weightedtarget" // Register the weighted_target balancer
+	_ "google.golang.org/grpc/xds/internal/balancer" // Register the balancers.
+	_ "google.golang.org/grpc/xds/internal/resolver" // Register the xds_resolver
 )
