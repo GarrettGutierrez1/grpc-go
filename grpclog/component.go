@@ -101,6 +101,7 @@ func (c *ComponentData) apply(applyData *ComponentData) {
 // parsing.
 func parseVar(key string, value string) (ComponentData, bool) {
 	result := ComponentData{key, sentinel, sentinel}
+	value = strings.ToUpper(value)
 	switch {
 	case value == "INFO":
 		result.level = levelInfo
