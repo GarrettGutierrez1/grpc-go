@@ -19,26 +19,18 @@
 package grpclog
 
 import (
-	"fmt"
-	"reflect"
 	"testing"
-)
 
-func toString(m *map[string]*ComponentData) string {
-	result := ""
-	for k, v := range *m {
-		result += fmt.Sprintf("\t%v: %v\n", k, *v)
-	}
-	return result
-}
+	"github.com/google/go-cmp/cmp"
+)
 
 func parseAndCompare(t *testing.T, envVar string, envVars, preVars map[string]*ComponentData) {
 	envVarsResult, preVarsResult := parseEnvironmentVar(envVar)
-	if !reflect.DeepEqual(envVars, envVarsResult) {
-		t.Errorf("Failed to parse environment variable '%v'.\nExpected standard variables:\n%vParsed:\n%v", envVar, toString(&envVars), toString(&envVarsResult))
+	if !cmp.Equal(envVars, envVarsResult, cmp.AllowUnexported(ComponentData{})) {
+		t.Errorf("Failed to parse environment variable '%v'.\nBegin Diff\n%vEnd Diff\n", envVar, cmp.Diff(&envVars, &envVarsResult, cmp.AllowUnexported(ComponentData{})))
 	}
-	if !reflect.DeepEqual(preVars, preVarsResult) {
-		t.Errorf("Failed to parse environment variable '%v'.\nExpected standard variables:\n%vParsed:\n%v", envVar, toString(&preVars), toString(&preVarsResult))
+	if !cmp.Equal(preVars, preVarsResult, cmp.AllowUnexported(ComponentData{})) {
+		t.Errorf("Failed to parse environment variable '%v'.\nBegin Diff\n%vEnd Diff\n", envVar, cmp.Diff(&preVars, &preVarsResult, cmp.AllowUnexported(ComponentData{})))
 	}
 }
 
