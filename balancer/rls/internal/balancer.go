@@ -34,7 +34,7 @@ var (
 
 	// For overriding in tests.
 	newRLSClientFunc = newRLSClient
-	logger           = grpclog.Component("BALANCER_RLS")
+	logger           = grpclog.Component("rls")
 )
 
 // rlsBalancer implements the RLS LB policy.

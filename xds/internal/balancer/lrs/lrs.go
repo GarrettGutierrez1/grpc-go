@@ -36,7 +36,7 @@ import (
 
 const negativeOneUInt64 = ^uint64(0)
 
-var logger = grpclog.Component("XDS")
+var logger = grpclog.Component("xds")
 
 // Store defines the interface for a load store. It keeps loads and can report
 // them to a server when requested.

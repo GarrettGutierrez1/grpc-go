@@ -32,7 +32,7 @@ import (
 	"google.golang.org/grpc/grpclog"
 )
 
-var logger = grpclog.Component("CORE")
+var logger = grpclog.Component("core")
 
 // GetCPUTime returns the how much CPU time has passed since the start of this process.
 func GetCPUTime() int64 {

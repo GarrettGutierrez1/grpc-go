@@ -44,7 +44,7 @@ import (
 // addresses from SRV records.  Must not be changed after init time.
 var EnableSRVLookups = false
 
-var logger = grpclog.Component("RESOLVER_DNS")
+var logger = grpclog.Component("resolver_dns")
 
 func init() {
 	resolver.Register(NewBuilder())

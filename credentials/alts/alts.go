@@ -67,7 +67,7 @@ var (
 	// ServerHandshake is running on a platform where the trustworthiness of
 	// the handshaker service is not guaranteed.
 	ErrUntrustedPlatform = errors.New("ALTS: untrusted platform. ALTS is only supported on GCP")
-	logger               = grpclog.Component("ALTS")
+	logger               = grpclog.Component("alts")
 )
 
 // AuthInfo exposes security information from the ALTS handshake to the

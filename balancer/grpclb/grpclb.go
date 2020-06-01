@@ -50,7 +50,7 @@ const (
 )
 
 var errServerTerminatedConnection = errors.New("grpclb: failed to recv server list: server terminated connection")
-var logger = grpclog.Component("BALANCER_GRPCLB")
+var logger = grpclog.Component("grpclb")
 
 func convertDuration(d *durationpb.Duration) time.Duration {
 	if d == nil {

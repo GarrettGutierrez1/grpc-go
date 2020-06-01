@@ -30,7 +30,7 @@ import (
 	"google.golang.org/grpc/internal/backoff"
 )
 
-var logger = grpclog.Component("BALANCER_RLS")
+var logger = grpclog.Component("rls")
 
 // Key represents the cache key used to uniquely identify a cache entry.
 type Key struct {

@@ -30,7 +30,7 @@ import (
 
 const nodeMetadataHostnameKey = "PROXYLESS_CLIENT_HOSTNAME"
 
-var logger = grpclog.Component("XDS")
+var logger = grpclog.Component("xds")
 
 // ReportLoad sends the load of the given clusterName from loadStore to the
 // given server. If the server is not an empty string, and is different from the

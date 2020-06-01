@@ -27,7 +27,7 @@ import (
 
 const mdKey = "X-Endpoint-Load-Metrics-Bin"
 
-var logger = grpclog.Component("XDS")
+var logger = grpclog.Component("xds")
 
 // toBytes converts a orca load report into bytes.
 func toBytes(r *orcapb.OrcaLoadReport) []byte {

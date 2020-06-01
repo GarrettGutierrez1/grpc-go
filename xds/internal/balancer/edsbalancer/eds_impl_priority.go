@@ -28,7 +28,7 @@ import (
 	"google.golang.org/grpc/grpclog"
 )
 
-var logger = grpclog.Component("XDS")
+var logger = grpclog.Component("xds")
 var errAllPrioritiesRemoved = errors.New("eds: no locality is provided, all priorities are removed")
 
 // handlePriorityChange handles priority after EDS adds/removes a

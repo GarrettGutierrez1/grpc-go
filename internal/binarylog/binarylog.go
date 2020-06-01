@@ -40,7 +40,7 @@ type Logger interface {
 // It is used to get a methodLogger for each individual method.
 var binLogger Logger
 
-var grpclogLogger = grpclog.Component("BINARYLOG")
+var grpclogLogger = grpclog.Component("binarylog")
 
 // SetLogger sets the binarg logger.
 //

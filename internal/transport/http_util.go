@@ -98,7 +98,7 @@ var (
 		// 504 Gateway timeout - UNAVAILABLE.
 		http.StatusGatewayTimeout: codes.Unavailable,
 	}
-	logger = grpclog.Component("TRANSPORT")
+	logger = grpclog.Component("transport")
 )
 
 type parsedHeaderData struct {

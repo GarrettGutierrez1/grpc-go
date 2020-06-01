@@ -24,7 +24,7 @@ import (
 	"google.golang.org/grpc/grpclog"
 )
 
-var logger = grpclog.Component("CHANNELZ")
+var logger = grpclog.Component("channelz")
 
 // Info logs and adds a trace event if channelz is on.
 func Info(id int64, args ...interface{}) {
