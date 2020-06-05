@@ -28,7 +28,7 @@ import (
 	"google.golang.org/grpc/resolver"
 )
 
-var logger = grpclog.Component("core")
+var logger = grpclog.Component("balancer")
 
 type baseBuilder struct {
 	name          string
