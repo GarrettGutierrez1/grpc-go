@@ -28,8 +28,8 @@ import (
 	"google.golang.org/grpc/internal/grpclog"
 )
 
-// ComponentData records the settings for a component.
-type ComponentData struct {
+// componentData records the settings for a component.
+type componentData struct {
 	name      string
 	verbosity int
 	level     int
@@ -45,9 +45,9 @@ const (
 	levelError   = 2
 )
 
-var environmentVars = map[string]*ComponentData{}
-var prefixVars = map[string]*ComponentData{}
-var cache = map[string]*ComponentData{}
+var environmentVars = map[string]*componentData{}
+var prefixVars = map[string]*componentData{}
+var cache = map[string]*componentData{}
 
 // init creates all grpc components and any components named in the environment
 // variable and applies all settings specified in the environment variable.
@@ -61,9 +61,9 @@ func init() {
 }
 
 // parseEnvironmentVar parses an environment variable string and pulls the component settings data.
-func parseEnvironmentVar(envVar string) (map[string]*ComponentData, map[string]*ComponentData) {
-	envVars := map[string]*ComponentData{}
-	preVars := map[string]*ComponentData{}
+func parseEnvironmentVar(envVar string) (map[string]*componentData, map[string]*componentData) {
+	envVars := map[string]*componentData{}
+	preVars := map[string]*componentData{}
 	varList := strings.Split(envVar, ",")
 	for _, varPair := range varList {
 		varPairList := strings.Split(varPair, ":")
@@ -84,9 +84,9 @@ func parseEnvironmentVar(envVar string) (map[string]*ComponentData, map[string]*
 	return envVars, preVars
 }
 
-// apply applies the parameter componentData to the receiver ComponentData.
+// apply applies the parameter componentData to the receiver componentData.
 // Sentinel values in the parameter will not be applied.
-func (c *ComponentData) apply(applyData *ComponentData) {
+func (c *componentData) apply(applyData *componentData) {
 	if applyData.verbosity != sentinel {
 		c.verbosity = applyData.verbosity
 	}
@@ -96,11 +96,11 @@ func (c *ComponentData) apply(applyData *ComponentData) {
 }
 
 // parseVar parses a key-value pair from the environment variable. The resulting
-// ComponentData will have a sentinel value for the verbosity if it is
+// componentData will have a sentinel value for the verbosity if it is
 // unspecified in the value. Second return value is false if there was an error
 // parsing.
-func parseVar(key string, value string) (ComponentData, bool) {
-	result := ComponentData{key, sentinel, sentinel}
+func parseVar(key string, value string) (componentData, bool) {
+	result := componentData{key, sentinel, sentinel}
 	value = strings.ToUpper(value)
 	switch {
 	case value == "INFO":
@@ -134,7 +134,7 @@ func getPrefix(s string) (string, bool) {
 
 // InfoDepth performs an info log of args at depth to the component, conditioned
 // on the component's log level.
-func (c *ComponentData) InfoDepth(depth int, args ...interface{}) {
+func (c *componentData) InfoDepth(depth int, args ...interface{}) {
 	if c.level > levelInfo {
 		return
 	}
@@ -144,7 +144,7 @@ func (c *ComponentData) InfoDepth(depth int, args ...interface{}) {
 
 // WarningDepth performs a warning log of args at depth to the component,
 // conditioned on the component's log level.
-func (c *ComponentData) WarningDepth(depth int, args ...interface{}) {
+func (c *componentData) WarningDepth(depth int, args ...interface{}) {
 	if c.level > levelWarning {
 		return
 	}
@@ -153,71 +153,91 @@ func (c *ComponentData) WarningDepth(depth int, args ...interface{}) {
 }
 
 // ErrorDepth performs an error log of args at depth to the component.
-func (c *ComponentData) ErrorDepth(depth int, args ...interface{}) {
+func (c *componentData) ErrorDepth(depth int, args ...interface{}) {
 	args = append([]interface{}{"[" + string(c.name) + "]"}, args...)
 	grpclog.ErrorDepth(depth, args...)
 }
 
 // FatalDepth performs a fatal log of args at depth to the component and then
 // exits the application in accordance with the logger's fatal behavior.
-func (c *ComponentData) FatalDepth(depth int, args ...interface{}) {
+func (c *componentData) FatalDepth(depth int, args ...interface{}) {
 	args = append([]interface{}{"[" + string(c.name) + "]"}, args...)
 	grpclog.FatalDepth(depth, args...)
 }
 
 // Info performs an InfoDepth log at depth 0.
-func (c *ComponentData) Info(args ...interface{}) {
+func (c *componentData) Info(args ...interface{}) {
 	c.InfoDepth(0, args...)
 }
 
 // Warning performs a WarningDepth log at depth 0.
-func (c *ComponentData) Warning(args ...interface{}) {
+func (c *componentData) Warning(args ...interface{}) {
 	c.WarningDepth(0, args...)
 }
 
 // Error performs an ErrorDepth log at depth 0.
-func (c *ComponentData) Error(args ...interface{}) {
+func (c *componentData) Error(args ...interface{}) {
 	c.ErrorDepth(0, args...)
 }
 
 // Fatal performs a FatalDepth log at depth 0.
-func (c *ComponentData) Fatal(args ...interface{}) {
+func (c *componentData) Fatal(args ...interface{}) {
 	c.FatalDepth(0, args...)
 }
 
 // Infof formats the string and performs and InfoDepth log at depth 0.
-func (c *ComponentData) Infof(format string, args ...interface{}) {
+func (c *componentData) Infof(format string, args ...interface{}) {
 	c.InfoDepth(0, fmt.Sprintf(format, args...))
 }
 
 // Warningf formats the string and performs and WarningDepth log at depth 0.
-func (c *ComponentData) Warningf(format string, args ...interface{}) {
+func (c *componentData) Warningf(format string, args ...interface{}) {
 	c.WarningDepth(0, fmt.Sprintf(format, args...))
 }
 
 // Errorf formats the string and performs and ErrorDepth log at depth 0.
-func (c *ComponentData) Errorf(format string, args ...interface{}) {
+func (c *componentData) Errorf(format string, args ...interface{}) {
 	c.ErrorDepth(0, fmt.Sprintf(format, args...))
 }
 
 // Fatalf formats the string and performs and FatalDepth log at depth 0.
-func (c *ComponentData) Fatalf(format string, args ...interface{}) {
+func (c *componentData) Fatalf(format string, args ...interface{}) {
 	c.FatalDepth(0, fmt.Sprintf(format, args...))
 }
 
+// Infoln performs an InfoDepth log at depth 0.
+func (c *componentData) Infoln(args ...interface{}) {
+	c.Info(args...)
+}
+
+// Warningln performs a WarningDepth log at depth 0.
+func (c *componentData) Warningln(args ...interface{}) {
+	c.Warning(args...)
+}
+
+// Errorln performs an ErrorDepth log at depth 0.
+func (c *componentData) Errorln(args ...interface{}) {
+	c.Error(args...)
+}
+
+// Fatalln performs a FatalDepth log at depth 0.
+func (c *componentData) Fatalln(args ...interface{}) {
+	c.Fatal(args...)
+}
+
 // V reports whether thbe verbosity level of the component is at least l.
-func (c *ComponentData) V(l int) bool {
+func (c *componentData) V(l int) bool {
 	return c.verbosity >= l
 }
 
 // Component creates a new component and returns it for logging. If a component
 // with the name already exists, nothing will be created and it will be
 // returned.
-func Component(componentName string) *ComponentData {
+func Component(componentName string) DepthLoggerV2 {
 	if cData, ok := cache[componentName]; ok {
 		return cData
 	}
-	c := ComponentData{componentName, 0, 0}
+	c := componentData{componentName, 0, 0}
 	// Apply prefix settings
 	for prefix, pData := range prefixVars {
 		if strings.HasPrefix(c.name, prefix) {
