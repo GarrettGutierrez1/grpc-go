@@ -40,6 +40,7 @@ var parserTests = []struct {
 	envVars map[string]*componentData
 	preVars map[string]*componentData
 }{
+	{"Empty", "", map[string]*componentData{}, map[string]*componentData{}},
 	{"Level", "INFO:INFO,WARNING:WARNING,ERROR:ERROR", map[string]*componentData{
 		"INFO":    {"INFO", sentinel, levelInfo},
 		"WARNING": {"WARNING", sentinel, levelWarning},
