@@ -26,6 +26,25 @@ import (
 
 var logger = grpclog.Component("channelz")
 
+func addTraceEventLogger(l grpclog.DepthLoggerV2, id int64, depth int, desc *TraceEventDesc) {
+	for d := desc; d != nil; d = d.Parent {
+		switch d.Severity {
+		case CtUNKNOWN:
+			l.InfoDepth(depth+1, d.Desc)
+		case CtINFO:
+			l.InfoDepth(depth+1, d.Desc)
+		case CtWarning:
+			l.WarningDepth(depth+1, d.Desc)
+		case CtError:
+			l.ErrorDepth(depth+1, d.Desc)
+		}
+	}
+	if getMaxTraceEntry() == 0 {
+		return
+	}
+	db.get().traceEvent(id, desc)
+}
+
 // Info logs and adds a trace event if channelz is on.
 func Info(id int64, args ...interface{}) {
 	if IsOn() {
@@ -48,6 +67,31 @@ func Infof(id int64, format string, args ...interface{}) {
 		})
 	} else {
 		logger.InfoDepth(1, msg)
+	}
+}
+
+// InfoToLogger is equivalent to Info except it logs to a specified component logger.
+func InfoToLogger(l grpclog.DepthLoggerV2, id int64, args ...interface{}) {
+	if IsOn() {
+		addTraceEventLogger(l, id, 1, &TraceEventDesc{
+			Desc:     fmt.Sprint(args...),
+			Severity: CtINFO,
+		})
+	} else {
+		l.InfoDepth(1, args...)
+	}
+}
+
+// InfofToLogger is equivalent to Infof except it logs to a specified component logger.
+func InfofToLogger(l grpclog.DepthLoggerV2, id int64, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	if IsOn() {
+		addTraceEventLogger(l, id, 1, &TraceEventDesc{
+			Desc:     msg,
+			Severity: CtINFO,
+		})
+	} else {
+		l.InfoDepth(1, msg)
 	}
 }
 
@@ -76,6 +120,31 @@ func Warningf(id int64, format string, args ...interface{}) {
 	}
 }
 
+// WarningToLogger is equivalent to Warning except it logs to a specified component logger.
+func WarningToLogger(l grpclog.DepthLoggerV2, id int64, args ...interface{}) {
+	if IsOn() {
+		addTraceEventLogger(l, id, 1, &TraceEventDesc{
+			Desc:     fmt.Sprint(args...),
+			Severity: CtWarning,
+		})
+	} else {
+		l.WarningDepth(1, args...)
+	}
+}
+
+// WarningfToLogger is equivalent to Warningf except it logs to a specified component logger.
+func WarningfToLogger(l grpclog.DepthLoggerV2, id int64, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	if IsOn() {
+		addTraceEventLogger(l, id, 1, &TraceEventDesc{
+			Desc:     msg,
+			Severity: CtWarning,
+		})
+	} else {
+		l.WarningDepth(1, msg)
+	}
+}
+
 // Error logs and adds a trace event if channelz is on.
 func Error(id int64, args ...interface{}) {
 	if IsOn() {
@@ -98,5 +167,30 @@ func Errorf(id int64, format string, args ...interface{}) {
 		})
 	} else {
 		logger.ErrorDepth(1, msg)
+	}
+}
+
+// ErrorToLogger is equivalent to Error except it logs to a specified component logger.
+func ErrorToLogger(l grpclog.DepthLoggerV2, id int64, args ...interface{}) {
+	if IsOn() {
+		addTraceEventLogger(l, id, 1, &TraceEventDesc{
+			Desc:     fmt.Sprint(args...),
+			Severity: CtError,
+		})
+	} else {
+		l.ErrorDepth(1, args...)
+	}
+}
+
+// ErrorfToLogger is equivalent to Errorf except it logs to a specified component logger.
+func ErrorfToLogger(l grpclog.DepthLoggerV2, id int64, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	if IsOn() {
+		addTraceEventLogger(l, id, 1, &TraceEventDesc{
+			Desc:     msg,
+			Severity: CtError,
+		})
+	} else {
+		l.ErrorDepth(1, msg)
 	}
 }

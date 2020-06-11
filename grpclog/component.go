@@ -206,6 +206,9 @@ func (c *componentData) Fatalln(args ...interface{}) {
 }
 
 func (c *componentData) V(l int) bool {
+	if c.verbosity == sentinel {
+		return grpclog.Logger.V(l)
+	}
 	return c.verbosity >= l
 }
 
@@ -217,7 +220,7 @@ func Component(componentName string) DepthLoggerV2 {
 	if cData, ok := cache[componentName]; ok {
 		return cData
 	}
-	c := &componentData{componentName, 0, 0}
+	c := &componentData{componentName, sentinel, levelInfo}
 	// Apply prefix settings
 	for prefix, pData := range prefixVars {
 		if strings.HasPrefix(c.name, prefix) {

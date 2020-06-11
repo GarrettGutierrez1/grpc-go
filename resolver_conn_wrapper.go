@@ -140,7 +140,7 @@ func (ccr *ccResolverWrapper) UpdateState(s resolver.State) {
 	if ccr.done.HasFired() {
 		return
 	}
-	channelz.Infof(ccr.cc.channelzID, "ccResolverWrapper: sending update to cc: %v", s)
+	channelz.InfofToLogger(logger, ccr.cc.channelzID, "ccResolverWrapper: sending update to cc: %v", s)
 	if channelz.IsOn() {
 		ccr.addChannelzTraceEvent(s)
 	}
@@ -152,7 +152,7 @@ func (ccr *ccResolverWrapper) ReportError(err error) {
 	if ccr.done.HasFired() {
 		return
 	}
-	channelz.Warningf(ccr.cc.channelzID, "ccResolverWrapper: reporting error to cc: %v", err)
+	channelz.WarningfToLogger(logger, ccr.cc.channelzID, "ccResolverWrapper: reporting error to cc: %v", err)
 	ccr.poll(ccr.cc.updateResolverState(resolver.State{}, err))
 }
 
@@ -161,7 +161,7 @@ func (ccr *ccResolverWrapper) NewAddress(addrs []resolver.Address) {
 	if ccr.done.HasFired() {
 		return
 	}
-	channelz.Infof(ccr.cc.channelzID, "ccResolverWrapper: sending new addresses to cc: %v", addrs)
+	channelz.InfofToLogger(logger, ccr.cc.channelzID, "ccResolverWrapper: sending new addresses to cc: %v", addrs)
 	if channelz.IsOn() {
 		ccr.addChannelzTraceEvent(resolver.State{Addresses: addrs, ServiceConfig: ccr.curState.ServiceConfig})
 	}
@@ -175,14 +175,14 @@ func (ccr *ccResolverWrapper) NewServiceConfig(sc string) {
 	if ccr.done.HasFired() {
 		return
 	}
-	channelz.Infof(ccr.cc.channelzID, "ccResolverWrapper: got new service config: %v", sc)
+	channelz.InfofToLogger(logger, ccr.cc.channelzID, "ccResolverWrapper: got new service config: %v", sc)
 	if ccr.cc.dopts.disableServiceConfig {
-		channelz.Info(ccr.cc.channelzID, "Service config lookups disabled; ignoring config")
+		channelz.InfoToLogger(logger, ccr.cc.channelzID, "Service config lookups disabled; ignoring config")
 		return
 	}
 	scpr := parseServiceConfig(sc)
 	if scpr.Err != nil {
-		channelz.Warningf(ccr.cc.channelzID, "ccResolverWrapper: error parsing service config: %v", scpr.Err)
+		channelz.WarningfToLogger(logger, ccr.cc.channelzID, "ccResolverWrapper: error parsing service config: %v", scpr.Err)
 		ccr.poll(balancer.ErrBadResolverState)
 		return
 	}
