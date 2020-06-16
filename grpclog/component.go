@@ -40,21 +40,14 @@ const sentinel = math.MinInt32
 
 // log levels
 const (
-	levelInfo    = 0
-	levelWarning = 1
-	levelError   = 2
+	levelInfo = iota
+	levelWarning
+	levelError
 )
 
 var environmentVars = map[string]*componentData{}
 var prefixVars = map[string]*componentData{}
 var cache = map[string]*componentData{}
-
-// init extracts the component settings from the environment variable.
-func init() {
-	// Pull environment variable data and put in environmentVars and prefixVars
-	v, _ := os.LookupEnv(envName)
-	environmentVars, prefixVars = parseEnvironmentVar(v)
-}
 
 // parseEnvironmentVar parses an environment variable string and pulls the component settings data.
 func parseEnvironmentVar(envVar string) (map[string]*componentData, map[string]*componentData) {
