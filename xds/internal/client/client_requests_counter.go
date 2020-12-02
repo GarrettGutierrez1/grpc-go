@@ -39,7 +39,6 @@ var src servicesRequestsCounter
 type ServiceRequestsCounter struct {
 	mu          sync.Mutex
 	ServiceName string
-	maxRequests uint32
 	numRequests uint32
 }
 
@@ -57,20 +56,13 @@ func NewServiceRequestsCounter(serviceName string) *ServiceRequestsCounter {
 	return c
 }
 
-// SetMaxRequests updates the max requests for a service's counter.
-func (c *ServiceRequestsCounter) SetMaxRequests(maxRequests uint32) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.maxRequests = maxRequests
-}
-
 // StartRequest starts a request for a service, incrementing its number of
 // requests by 1. Returns an error if the max number of requests is exceeded.
-func (c *ServiceRequestsCounter) StartRequest() error {
+func (c *ServiceRequestsCounter) StartRequest(maxRequests uint32) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.numRequests+1 > c.maxRequests {
-		return fmt.Errorf("max requests %v exceeded on service %v", c.maxRequests, c.ServiceName)
+	if c.numRequests+1 > maxRequests {
+		return fmt.Errorf("max requests %v exceeded on service %v", maxRequests, c.ServiceName)
 	}
 	c.numRequests++
 	return nil

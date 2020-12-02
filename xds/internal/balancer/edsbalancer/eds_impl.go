@@ -94,11 +94,12 @@ type edsBalancerImpl struct {
 	subConnMu         sync.Mutex
 	subConnToPriority map[balancer.SubConn]priorityType
 
-	pickerMu   sync.Mutex
-	dropConfig []xdsclient.OverloadDropConfig
-	drops      []*dropper
-	innerState balancer.State // The state of the picker without drop support.
-	counter    *client.ServiceRequestsCounter
+	pickerMu    sync.Mutex
+	dropConfig  []xdsclient.OverloadDropConfig
+	drops       []*dropper
+	innerState  balancer.State // The state of the picker without drop support.
+	maxRequests uint32
+	counter     *client.ServiceRequestsCounter
 }
 
 // newEDSBalancerImpl create a new edsBalancerImpl.
@@ -173,7 +174,7 @@ func (edsImpl *edsBalancerImpl) updateDrops(dropConfig []xdsclient.OverloadDropC
 		// Update picker with old inner picker, new drops.
 		edsImpl.cc.UpdateState(balancer.State{
 			ConnectivityState: edsImpl.innerState.ConnectivityState,
-			Picker:            newDropPicker(edsImpl.innerState.Picker, newDrops, edsImpl.xdsClient.loadStore(), edsImpl.counter)},
+			Picker:            newDropPicker(edsImpl.innerState.Picker, newDrops, edsImpl.xdsClient.loadStore(), edsImpl.counter, edsImpl.maxRequests)},
 		)
 	}
 	edsImpl.pickerMu.Unlock()
@@ -400,11 +401,11 @@ func (edsImpl *edsBalancerImpl) updateConfig(edsConfig *EDSConfig) {
 	if edsImpl.counter == nil || edsImpl.counter.ServiceName != edsConfig.EDSServiceName {
 		edsImpl.counter = client.NewServiceRequestsCounter(edsConfig.EDSServiceName)
 	}
-	if edsConfig.MaxRequests != nil {
-		edsImpl.counter.SetMaxRequests(*edsConfig.MaxRequests)
-	} else {
+	if edsConfig.MaxRequests == nil {
 		// counter should be nil to prevent overhead in dropPicker.
 		edsImpl.counter = nil
+	} else {
+		edsImpl.maxRequests = *edsConfig.MaxRequests
 	}
 }
 
@@ -422,7 +423,7 @@ func (edsImpl *edsBalancerImpl) updateState(priority priorityType, s balancer.St
 		defer edsImpl.pickerMu.Unlock()
 		edsImpl.innerState = s
 		// Don't reset drops when it's a state change.
-		edsImpl.cc.UpdateState(balancer.State{ConnectivityState: s.ConnectivityState, Picker: newDropPicker(s.Picker, edsImpl.drops, edsImpl.xdsClient.loadStore(), edsImpl.counter)})
+		edsImpl.cc.UpdateState(balancer.State{ConnectivityState: s.ConnectivityState, Picker: newDropPicker(s.Picker, edsImpl.drops, edsImpl.xdsClient.loadStore(), edsImpl.counter, edsImpl.maxRequests)})
 	}
 }
 
@@ -471,18 +472,20 @@ func (edsImpl *edsBalancerImpl) close() {
 }
 
 type dropPicker struct {
-	drops     []*dropper
-	p         balancer.Picker
-	loadStore load.PerClusterReporter
-	counter   *client.ServiceRequestsCounter
+	drops       []*dropper
+	p           balancer.Picker
+	loadStore   load.PerClusterReporter
+	counter     *client.ServiceRequestsCounter
+	maxRequests uint32
 }
 
-func newDropPicker(p balancer.Picker, drops []*dropper, loadStore load.PerClusterReporter, counter *client.ServiceRequestsCounter) *dropPicker {
+func newDropPicker(p balancer.Picker, drops []*dropper, loadStore load.PerClusterReporter, counter *client.ServiceRequestsCounter, maxRequests uint32) *dropPicker {
 	return &dropPicker{
-		drops:     drops,
-		p:         p,
-		loadStore: loadStore,
-		counter:   counter,
+		drops:       drops,
+		p:           p,
+		loadStore:   loadStore,
+		counter:     counter,
+		maxRequests: maxRequests,
 	}
 }
 
@@ -505,7 +508,7 @@ func (d *dropPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 		return balancer.PickResult{}, status.Errorf(codes.Unavailable, "RPC is dropped")
 	}
 	if d.counter != nil {
-		if err := d.counter.StartRequest(); err != nil {
+		if err := d.counter.StartRequest(d.maxRequests); err != nil {
 			return balancer.PickResult{}, status.Errorf(codes.Unavailable, err.Error())
 		}
 		pr, err := d.p.Pick(info)

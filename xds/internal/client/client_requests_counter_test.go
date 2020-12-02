@@ -34,7 +34,6 @@ type counterTest struct {
 
 func testCounter(t *testing.T, test counterTest) {
 	counter := client.NewServiceRequestsCounter(test.name)
-	counter.SetMaxRequests(test.maxRequests)
 	requestsStartedWg := sync.WaitGroup{}
 	requestsStartedWg.Add(1)
 	requestsSent := sync.WaitGroup{}
@@ -46,7 +45,7 @@ func testCounter(t *testing.T, test counterTest) {
 	for i := 0; i < int(test.numRequests); i++ {
 		go func() {
 			defer requestsDoneWg.Done()
-			if err := counter.StartRequest(); err != nil {
+			if err := counter.StartRequest(test.maxRequests); err != nil {
 				errorMu.Lock()
 				defer errorMu.Unlock()
 				if firstError == nil {
