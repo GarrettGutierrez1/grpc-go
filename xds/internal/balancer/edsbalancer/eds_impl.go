@@ -513,6 +513,7 @@ func (d *dropPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 		}
 		pr, err := d.p.Pick(info)
 		if err != nil {
+			d.counter.EndRequest()
 			return pr, err
 		}
 		oldDone := pr.Done

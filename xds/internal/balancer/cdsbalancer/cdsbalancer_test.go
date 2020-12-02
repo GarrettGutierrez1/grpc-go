@@ -206,7 +206,7 @@ func edsCCS(service string, enableLRS bool) balancer.ClientConnState {
 func edsCCScb(service string, enableLRS bool, xdsClient interface{}, maxRequests uint32) balancer.ClientConnState {
 	ccs := edsCCS(service, enableLRS)
 	if edsConfig, ok := ccs.BalancerConfig.(*edsbalancer.EDSConfig); ok {
-		edsConfig.MaxRequests = func() *uint32 { i := uint32(maxRequests); return &i }()
+		edsConfig.MaxRequests = &maxRequests
 	}
 	return ccs
 }
